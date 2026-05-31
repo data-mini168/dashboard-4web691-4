@@ -361,7 +361,19 @@ tr:hover td{background:rgba(0,229,160,.04)}
 
 <!-- SUMMARY -->
 <div id="p-summary" class="panel">
-  <div class="fbar"><span class="flabel">แสดง:</span><div id="sp-pills"></div></div>
+  <!-- Row 1: กลุ่มเว็บ -->
+  <div class="fbar" style="gap:8px;flex-wrap:wrap">
+    <span class="flabel">กลุ่ม:</span>
+    <div id="s-group-pills" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+    <button class="btn btn-sm" onclick="sSaveGroup()" style="font-size:11px;padding:4px 10px;color:var(--teal);border-color:rgba(0,229,160,.3)">+ บันทึกกลุ่ม</button>
+    <button class="btn btn-sm" onclick="sClearSel()" style="font-size:11px;padding:4px 10px">ล้างเลือก</button>
+  </div>
+  <!-- Row 2: เลือกเว็บ (multi-select) -->
+  <div class="fbar" style="gap:8px;flex-wrap:wrap">
+    <span class="flabel">เว็บ:</span>
+    <div id="sp-pills"></div>
+  </div>
+  <!-- Row 3: ช่วงเดือน + คอลัมน์ -->
   <div class="fbar" style="gap:10px;flex-wrap:wrap">
     <span class="flabel">ช่วงเดือน:</span>
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
@@ -404,6 +416,14 @@ tr:hover td{background:rgba(0,229,160,.04)}
 
 <!-- CHARTS -->
 <div id="p-charts" class="panel">
+  <!-- Row 1: กลุ่มเว็บ -->
+  <div class="fbar" style="gap:8px;flex-wrap:wrap">
+    <span class="flabel">กลุ่ม:</span>
+    <div id="c-group-pills" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+    <button class="btn btn-sm" onclick="cSaveGroup()" style="font-size:11px;padding:4px 10px;color:var(--teal);border-color:rgba(0,229,160,.3)">+ บันทึกกลุ่ม</button>
+    <button class="btn btn-sm" onclick="cClearSel()" style="font-size:11px;padding:4px 10px">ล้างเลือก</button>
+  </div>
+  <!-- Row 2: เลือกเว็บ (multi-select) -->
   <div class="fbar"><span class="flabel">แสดง:</span><div id="cp-pills"></div></div>
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
@@ -623,40 +643,56 @@ tr:hover td{background:rgba(0,229,160,.04)}
 
 // ── STATE ──────────────────────────────────────────────
 var sites = [
-  {id:1,name:'H-GAS',color:'#f1ff2e'},
-  {id:2,name:'GSY',color:'#d1001f'},
-  {id:3,name:'PIXEL',color:'#ddb00e'},
-  {id:4,name:'VOLT',color:'#56517b'}
+  {id:1,name:'HG',color:'#f1ff2e'},
+  {id:2,name:'GS',color:'#d1001f'},
+  {id:3,name:'PX',color:'#ddb00e'},
+  {id:4,name:'VO',color:'#56517b'},
+  {id:5,name:'CO',color:'#00e5a0'},
+  {id:6,name:'FI',color:'#00ccff'},
+  {id:7,name:'AN',color:'#ff00d0'}
 ];
 var entries = [
   {sid:1,m:1,y:2569,ad:63362,nc:703,fd:613,dep:9559037,win:2068891,ol:526},
   {sid:1,m:2,y:2569,ad:0,nc:509,fd:446,dep:11406070,win:1728203,ol:500},
   {sid:1,m:3,y:2569,ad:0,nc:403,fd:365,dep:10812684,win:2620480,ol:492},
+  {sid:1,m:4,y:2569,ad:49694,nc:674,fd:533,dep:8867386,win:1745100,ol:515},
   {sid:2,m:1,y:2569,ad:128310,nc:1410,fd:926,dep:6795278,win:1651744,ol:506},
   {sid:2,m:2,y:2569,ad:0,nc:798,fd:545,dep:5352096,win:1403771,ol:500},
   {sid:2,m:3,y:2569,ad:0,nc:663,fd:461,dep:6841759,win:1318854,ol:434},
+  {sid:2,m:4,y:2569,ad:393760,nc:2708,fd:1653,dep:8665822,win:1858137,ol:617},
   {sid:3,m:1,y:2569,ad:0,nc:663,fd:462,dep:18525677,win:3587880,ol:731},
   {sid:3,m:2,y:2569,ad:32086,nc:958,fd:642,dep:18093381,win:2088561,ol:803},
   {sid:3,m:3,y:2569,ad:95527,nc:1008,fd:734,dep:20661847,win:4036384,ol:750},
+  {sid:3,m:4,y:2569,ad:32750,nc:343,fd:287,dep:20696768,win:4114887,ol:787},
   {sid:4,m:1,y:2569,ad:316417,nc:1403,fd:888,dep:12591361,win:2716280,ol:455},
   {sid:4,m:2,y:2569,ad:301320,nc:2020,fd:1181,dep:17185791,win:3216479,ol:626},
-  {sid:4,m:3,y:2569,ad:287738,nc:1967,fd:1293,dep:24675044,win:4974502,ol:701}
+  {sid:4,m:3,y:2569,ad:287738,nc:1967,fd:1293,dep:24675044,win:4974502,ol:701},
+  {sid:4,m:4,y:2569,ad:196508,nc:1456,fd:1219,dep:29687307,win:4336160,ol:913},
+  {sid:5,m:1,y:2569,ad:300667,nc:855,fd:692,dep:5697840,win:1609591,ol:240},
+  {sid:5,m:2,y:2569,ad:271445,nc:939,fd:669,dep:14538484,win:2338684,ol:387},
+  {sid:5,m:3,y:2569,ad:191086,nc:1279,fd:1025,dep:19114549,win:3728140,ol:529},
+  {sid:5,m:4,y:2569,ad:195805,nc:1387,fd:1117,dep:26625722,win:4910397,ol:686},
+  {sid:6,m:3,y:2569,ad:112463,nc:489,fd:302,dep:607001,win:140251,ol:31},
+  {sid:6,m:4,y:2569,ad:98607,nc:857,fd:508,dep:1468094,win:143650,ol:99}
 ];
 var donutData = {
   '2569-01':{m:1,y:2569,ai:6132953,ao:538089,si:345209,so:85000,bi:695694,bo:80000},
-  '2569-02':{m:2,y:2569,ai:4664527,ao:363407,si:446557,so:85000,bi:757619,bo:80000},
-  '2569-03':{m:3,y:2569,ai:8311676,ao:426349,si:693987,so:100000,bi:905281,bo:110000}
+  '2569-02':{m:2,y:2569,ai:4664527,ao:363407,si:446557,so:85000,bi:1005991,bo:110000},
+  '2569-03':{m:3,y:2569,ai:8311676,ao:426350,si:693987,so:100000,bi:1051942,bo:130000},
+  '2569-04':{m:4,y:2569,ai:7865583,ao:702712,si:412539,so:129500,bi:491361,bo:124000}
 };
-var nextId    = 5;
+var nextId    = 8;
 var selSite   = 1;
-var sumSel    = 'all';
-var chSel     = 'all';
+var sumSel    = 'all';   // 'all' | array of site ids e.g. [1,3]
+var chSel     = 'all';   // 'all' | array of site ids
+var sGroups   = [];      // [{name,ids,color}]
+var cGroups   = [];      // same for charts
 var dnSel     = 'all';
 var editKey   = null;
 var dnEditKey = null;
 var chartObjs = {};
 var dnCI = null, dnCO = null;
-var LS    = 'dash4web69_v9';
+var LS    = 'dash4web69_v10';
 
 // ── UTILS ──────────────────────────────────────────────
 function fmt(n){ return Number(n||0).toLocaleString('th-TH',{maximumFractionDigits:0}); }
@@ -668,7 +704,7 @@ function el(id){ return document.getElementById(id); }
 function uniq(arr){ return arr.filter(function(v,i,a){return a.indexOf(v)===i;}); }
 
 // ── LOAD / SAVE ────────────────────────────────────────
-var OLD_KEYS=['dash4web69_v1','dash4web69_v2','dash4web69_v3','dash4web69_v4','dash4web69_v5','dash4web69_v6','dash4web69_v7','dash4web69_v8'];
+var OLD_KEYS=['dash4web69_v1','dash4web69_v2','dash4web69_v3','dash4web69_v4','dash4web69_v5','dash4web69_v6','dash4web69_v7','dash4web69_v8','dash4web69_v9'];
 
 // ── DAILY STATE (declared here so loadLS can populate them) ───
 var dailyData    = {};
@@ -702,7 +738,7 @@ function persist(){
   try{
     var payload={
       sites:sites,entries:entries,donutData:donutData,
-      dailyData:dailyData,monthSettings:monthSettings,
+      dailyData:dailyData,monthSettings:monthSettings,sGroups:sGroups,cGroups:cGroups,
       nextId:nextId,t:Date.now()
     };
     localStorage.setItem(LS,JSON.stringify(payload));
@@ -1376,13 +1412,45 @@ function findIdx(arr,k){for(var i=0;i<arr.length;i++)if(eKey(arr[i])===k)return 
 
 // ── SUMMARY ───────────────────────────────────────────
 function renderSP(){
-  el('sp-pills').innerHTML=pillsHTML(sumSel,'selSP',true);
+  var isAll=sumSel==='all';
+  var h='<button class="pill" onclick="selSP(\'all\')" style="'+(isAll?'background:rgba(0,229,160,.15);border-color:var(--teal);color:var(--teal);font-weight:700':'')+'">ทุกเว็บ</button>';
+  for(var i=0;i<sites.length;i++){
+    var s=sites[i],sel=Array.isArray(sumSel)&&sumSel.indexOf(s.id)>=0;
+    h+='<button class="pill" onclick="selSP('+s.id+')" style="'+(sel?'background:'+s.color+'33;border-color:'+s.color+';color:'+s.color+';font-weight:700':'')+'"><span class="sdot" style="background:'+s.color+'"></span>'+s.name+'</button>';
+  }
+  el('sp-pills').innerHTML=h;
+  var gh='';
+  for(var j=0;j<sGroups.length;j++){
+    var g=sGroups[j];
+    gh+='<button class="pill" onclick="sLoadGroup('+j+')" style="background:'+g.color+'22;border-color:'+g.color+';color:'+g.color+';font-weight:600">'+g.name+'</button>'
+      +'<button onclick="sDelGroup('+j+')" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:11px;margin-left:-4px;padding:2px 5px">✕</button>';
+  }
+  el('s-group-pills').innerHTML=gh||'<span style="font-size:11px;color:var(--text3)">ยังไม่มีกลุ่ม</span>';
   populateDateDropdowns();
 }
-window.selSP=function(id){sumSel=id;renderSP();renderSummary();};
+window.selSP=function(id){
+  if(id==='all'){sumSel='all';}
+  else{
+    if(sumSel==='all')sumSel=[];
+    var idx=sumSel.indexOf(id);
+    if(idx>=0)sumSel.splice(idx,1);else sumSel.push(id);
+    if(sumSel.length===0)sumSel='all';
+  }
+  renderSP();renderSummary();
+};
+window.sClearSel=function(){sumSel='all';renderSP();renderSummary();};
+window.sSaveGroup=function(){
+  if(sumSel==='all'||!Array.isArray(sumSel)||sumSel.length===0){alert('เลือกเว็บก่อนบันทึกกลุ่ม');return;}
+  var nm=prompt('ตั้งชื่อกลุ่ม:');if(!nm)return;
+  var cols=['#00E5A0','#3B9EFF','#FFB800','#FF4D6A','#A78BFF','#FF8C42'];
+  sGroups.push({name:nm,ids:sumSel.slice(),color:cols[sGroups.length%cols.length]});
+  renderSP();persist();toast('✅ บันทึกกลุ่ม "'+nm+'" แล้ว');
+};
+window.sLoadGroup=function(i){sumSel=sGroups[i].ids.slice();renderSP();renderSummary();};
+window.sDelGroup=function(i){if(!confirm('ลบกลุ่ม "'+sGroups[i].name+'"?'))return;sGroups.splice(i,1);renderSP();persist();};
 
 function populateDateDropdowns(){
-  var f=sumSel==='all'?entries:entries.filter(function(e){return e.sid===sumSel;});
+  var f=sumSel==='all'?entries:(Array.isArray(sumSel)?entries.filter(function(e){return sumSel.indexOf(e.sid)>=0;}):entries.filter(function(e){return e.sid===sumSel;}));
   var mks=uniq(f.map(mKey)).sort();
   var fv=el('s-from-m').value, tv=el('s-to-m').value;
   var o1='<option value="">เดือนเริ่ม</option>',o2='<option value="">เดือนสิ้นสุด</option>';
@@ -1396,7 +1464,10 @@ window.applyDateFilter=function(){renderSummary();};
 window.clearDateFilter=function(){el('s-from-m').value='';el('s-to-m').value='';renderSummary();};
 
 function renderSummary(){
-  var f=sumSel==='all'?entries:entries.filter(function(e){return e.sid===sumSel;});
+  var f;
+  if(sumSel==='all') f=entries.slice();
+  else if(Array.isArray(sumSel)) f=entries.filter(function(e){return sumSel.indexOf(e.sid)>=0;});
+  else f=entries.filter(function(e){return e.sid===sumSel;});
   var fromMk=el('s-from-m')?el('s-from-m').value:'';
   var toMk=el('s-to-m')?el('s-to-m').value:'';
   if(fromMk) f=f.filter(function(e){return mKey(e)>=fromMk;});
@@ -1412,7 +1483,11 @@ function renderSummary(){
     var gg=s1?((s2-s1)/s1*100).toFixed(2):0;
     gb='<div class="m '+(gg>=0?'m-teal':'m-coral')+'"><div class="m-l">เติบโตล่าสุด</div><div class="m-v '+(gg>=0?'up':'down')+'">'+(gg>=0?'+':'')+gg+'%</div><div class="m-s">vs เดือนก่อน</div><div class="m-bar" style="background:'+(gg>=0?'var(--teal)':'var(--coral)')+'"></div></div>';
   }
-  var sel=find(sites,sumSel), lbl=sumSel==='all'?'ทุกเว็บ':(sel?sel.name:'');
+  var lbl;
+  if(sumSel==='all') lbl='ทุกเว็บ';
+  else if(Array.isArray(sumSel)) lbl=sumSel.map(function(id){var s=find(sites,id);return s?s.name:id;}).join(', ');
+  else{var sel=find(sites,sumSel);lbl=sel?sel.name:'';}
+  var sel=find(sites,Array.isArray(sumSel)?sumSel[0]:sumSel);
   var filterNote=(fromMk||toMk)?'&nbsp;<span style="font-size:10px;color:var(--amber);background:rgba(255,184,0,.12);padding:2px 8px;border-radius:10px;border:0.5px solid rgba(255,184,0,.3)">🔍 กรองช่วงเดือน</span>':'';
   el('s-metrics').innerHTML=
     mCard('m-teal','ยอดฝากสะสม',fmtM(tD),lbl+' · บาท','var(--teal)')+
@@ -1450,11 +1525,13 @@ function renderSummary(){
   }
   el('s-month-b').innerHTML=hm||'<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:1.5rem">— ยังไม่มีข้อมูล —</td></tr>';
   var sc=el('s-sites-c');
-  if(sumSel==='all'){
+  var showSites=sumSel==='all'||(Array.isArray(sumSel)&&sumSel.length>1);
+  if(showSites){
     sc.style.display='block';
+    var sitesToShow=sumSel==='all'?sites:sites.filter(function(s){return Array.isArray(sumSel)&&sumSel.indexOf(s.id)>=0;});
     var hs='';
-    for(var j=0;j<sites.length;j++){
-      var s=sites[j],se=f.filter(function(e){return e.sid===s.id;});
+    for(var j=0;j<sitesToShow.length;j++){
+      var s=sitesToShow[j],se=f.filter(function(e){return e.sid===s.id;});
       var dp=sum(se,'dep'),wn=sum(se,'win'),nc=sum(se,'nc'),ol=se.length?Math.round(sum(se,'ol')/se.length):0,adS=sum(se,'ad'),fdS=sum(se,'fd');
       var pFd=nc>0?((fdS/nc)*100).toFixed(1)+'%':'-';
       var pFdC=nc>0?(fdS/nc>=0.7?'var(--teal)':fdS/nc>=0.5?'var(--amber)':'var(--coral)'):'var(--text3)';
@@ -1475,8 +1552,42 @@ function sumArr(arr,mk){return arr.filter(function(e){return mKey(e)===mk;}).red
 function mCard(cls,label,val,sub,col){return '<div class="m '+cls+'"><div class="m-l">'+label+'</div><div class="m-v">'+val+'</div><div class="m-s">'+sub+'</div><div class="m-bar" style="background:'+col+'"></div></div>';}
 
 // ── CHARTS ────────────────────────────────────────────
-function renderCP(){el('cp-pills').innerHTML=pillsHTML(chSel,'selCP',true);}
-window.selCP=function(id){chSel=id;renderCP();setTimeout(renderCharts,60);};
+function renderCP(){
+  var isAll=chSel==='all';
+  var h='<button class="pill" onclick="selCP(\'all\')" style="'+(isAll?'background:rgba(0,229,160,.15);border-color:var(--teal);color:var(--teal);font-weight:700':'')+'">ทุกเว็บ</button>';
+  for(var i=0;i<sites.length;i++){
+    var s=sites[i],sel=Array.isArray(chSel)&&chSel.indexOf(s.id)>=0;
+    h+='<button class="pill" onclick="selCP('+s.id+')" style="'+(sel?'background:'+s.color+'33;border-color:'+s.color+';color:'+s.color+';font-weight:700':'')+'"><span class="sdot" style="background:'+s.color+'"></span>'+s.name+'</button>';
+  }
+  el('cp-pills').innerHTML=h;
+  var gh='';
+  for(var j=0;j<cGroups.length;j++){
+    var g=cGroups[j];
+    gh+='<button class="pill" onclick="cLoadGroup('+j+')" style="background:'+g.color+'22;border-color:'+g.color+';color:'+g.color+';font-weight:600">'+g.name+'</button>'
+      +'<button onclick="cDelGroup('+j+')" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:11px;margin-left:-4px;padding:2px 5px">✕</button>';
+  }
+  el('c-group-pills').innerHTML=gh||'<span style="font-size:11px;color:var(--text3)">ยังไม่มีกลุ่ม</span>';
+}
+window.selCP=function(id){
+  if(id==='all'){chSel='all';}
+  else{
+    if(chSel==='all')chSel=[];
+    var idx=chSel.indexOf(id);
+    if(idx>=0)chSel.splice(idx,1);else chSel.push(id);
+    if(chSel.length===0)chSel='all';
+  }
+  renderCP();setTimeout(renderCharts,60);
+};
+window.cClearSel=function(){chSel='all';renderCP();setTimeout(renderCharts,60);};
+window.cSaveGroup=function(){
+  if(chSel==='all'||!Array.isArray(chSel)||chSel.length===0){alert('เลือกเว็บก่อนบันทึกกลุ่ม');return;}
+  var nm=prompt('ตั้งชื่อกลุ่ม:');if(!nm)return;
+  var cols=['#00E5A0','#3B9EFF','#FFB800','#FF4D6A','#A78BFF','#FF8C42'];
+  cGroups.push({name:nm,ids:chSel.slice(),color:cols[cGroups.length%cols.length]});
+  renderCP();persist();toast('✅ บันทึกกลุ่ม "'+nm+'" แล้ว');
+};
+window.cLoadGroup=function(i){chSel=cGroups[i].ids.slice();renderCP();setTimeout(renderCharts,60);};
+window.cDelGroup=function(i){if(!confirm('ลบกลุ่ม "'+cGroups[i].name+'"?'))return;cGroups.splice(i,1);renderCP();persist();};
 
 // Register datalabels plugin globally
 if(typeof ChartDataLabels!=='undefined') Chart.register(ChartDataLabels);
@@ -1545,10 +1656,15 @@ function hexToRgb(hex){
 }
 
 function renderCharts(){
-  var f=chSel==='all'?entries:entries.filter(function(e){return e.sid===chSel;});
+  var f;
+  if(chSel==='all') f=entries.slice();
+  else if(Array.isArray(chSel)) f=entries.filter(function(e){return chSel.indexOf(e.sid)>=0;});
+  else f=entries.filter(function(e){return e.sid===chSel;});
   var mks=uniq(f.map(mKey)).sort();
   var labels=mks.map(function(mk){var p=mk.split('-').map(Number);return p[1]+'/'+p[0];});
-  var sel=find(sites,chSel),isAll=chSel==='all';
+  var isAll=chSel==='all'||Array.isArray(chSel)&&chSel.length>1;
+  var activeSites=isAll?(chSel==='all'?sites:sites.filter(function(s){return chSel.indexOf(s.id)>=0;})):[find(sites,Array.isArray(chSel)?chSel[0]:chSel)].filter(Boolean);
+  var sel=activeSites.length===1?activeSites[0]:null;
   Object.keys(chartObjs).forEach(function(k){if(chartObjs[k])chartObjs[k].destroy();});chartObjs={};
   el('c-dep-leg').innerHTML='';el('c-ol-leg').innerHTML='';
 
@@ -1558,11 +1674,11 @@ function renderCharts(){
   if(isAll){
     el('c-dep-t').textContent='ยอดฝากรายเดือน เปรียบเทียบแต่ละเว็บ';
     el('c-ol-t').textContent='คนออนไลน์เฉลี่ยต่อวัน เปรียบเทียบแต่ละเว็บ';
-    el('c-dep-leg').innerHTML=sites.map(function(s){return'<span><span class="ldot" style="background:'+s.color+';box-shadow:0 0 6px '+s.color+'"></span>'+s.name+'</span>';}).join('');
+    el('c-dep-leg').innerHTML=activeSites.map(function(s){return'<span><span class="ldot" style="background:'+s.color+';box-shadow:0 0 6px '+s.color+'"></span>'+s.name+'</span>';}).join('');
     el('c-ol-leg').innerHTML=el('c-dep-leg').innerHTML;
 
     chartObjs.dep=new Chart(el('c-dep'),{type:'bar',
-      data:{labels:labels,datasets:sites.map(function(s){
+      data:{labels:labels,datasets:activeSites.map(function(s){
         var rgb=hexToRgb(s.color);
         return{label:s.name,
           data:mks.map(function(mk){var p=mk.split('-').map(Number);return entries.filter(function(e){return e.sid===s.id&&e.m===p[1]&&e.y===p[0];}).reduce(function(x,e){return x+e.dep;},0);}),
@@ -1580,7 +1696,7 @@ function renderCharts(){
       })},options:barOpts});
 
     chartObjs.ol=new Chart(el('c-ol'),{type:'line',
-      data:{labels:labels,datasets:sites.map(function(s){
+      data:{labels:labels,datasets:activeSites.map(function(s){
         return{label:s.name,
           data:mks.map(function(mk){var p=mk.split('-').map(Number);var me=entries.filter(function(e){return e.sid===s.id&&e.m===p[1]&&e.y===p[0];});return me.length?Math.round(sum(me,'ol')/me.length):null;}),
           borderColor:s.color,
@@ -1827,7 +1943,7 @@ var SESSION_KEY='dash4web69_session';
 
 function getCredentials(){
   try{var c=localStorage.getItem(AUTH_KEY);return c?JSON.parse(c):{user:'admin',pass:'Amini123**'};}
-  catch(e){return{user:'admin',pass:'1234'};}
+  catch(e){return{user:'admin',pass:'Amini123**'};}
 }
 function saveCredentials(user,pass){
   localStorage.setItem(AUTH_KEY,JSON.stringify({user:user,pass:pass}));
