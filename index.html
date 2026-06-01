@@ -525,6 +525,7 @@ tr:hover td{background:rgba(0,229,160,.04)}
       <span class="flabel">เดือน:</span>
       <select id="dy-month-sel" onchange="dyOnMonthChange()" style="padding:6px 10px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:rgba(0,0,0,.3);color:var(--text);font-size:13px;font-family:inherit"></select>
       <button class="btn btn-p btn-sm" onclick="dyAddNextMonth()" style="font-size:12px;padding:5px 14px">+ เพิ่มเดือนถัดไป</button>
+      <button class="btn btn-sm" onclick="dyAddPrevMonth()" style="font-size:12px;padding:5px 14px;color:var(--amber);border-color:rgba(255,184,0,.35);background:rgba(255,184,0,.08)">+ เพิ่มเดือนย้อนหลัง</button>
       <button class="btn btn-sm btn-d" onclick="dyDelMonth()" style="font-size:12px;padding:5px 12px">ลบเดือนนี้</button>
     </div>
   </div>
@@ -847,7 +848,41 @@ window.dyAddNextMonth=function(){
   }
   dd.value=nextMk;
   dyOnMonthChange();
+  persist();
   toast('✅ เพิ่มเดือน '+nextMk.split('-').reverse().join('/')+' แล้ว');
+};
+
+window.dyAddPrevMonth=function(){
+  var dd=el('dy-month-sel');
+  var mks=Array.from(dd.options).map(function(o){return o.value;}).sort();
+  var firstMk=mks.length?mks[0]:'';
+  var prevMk='';
+  if(firstMk){
+    var p=firstMk.split('-').map(Number),yr=p[0],mo=p[1];
+    mo--;if(mo<1){mo=12;yr--;}
+    prevMk=yr+'-'+('0'+mo).slice(-2);
+  } else {
+    var now=new Date();
+    var mo2=now.getMonth(); var yr2=now.getFullYear();
+    if(mo2<1){mo2=12;yr2--;}
+    prevMk=yr2+'-'+('0'+mo2).slice(-2);
+  }
+  if(!Array.from(dd.options).find(function(o){return o.value===prevMk;})){
+    var p3=prevMk.split('-').map(Number);
+    var opt2=document.createElement('option');
+    opt2.value=prevMk; opt2.text=p3[1]+'/'+p3[0];
+    // Insert at beginning of dropdown
+    dd.insertBefore(opt2,dd.options[0]);
+    // Copy settings from first month
+    if(firstMk){
+      var s2=dyGetSettings(firstMk);
+      dySetSettings(prevMk,s2.target,s2.days);
+    }
+  }
+  dd.value=prevMk;
+  dyOnMonthChange();
+  persist();
+  toast('✅ เพิ่มเดือน '+prevMk.split('-').reverse().join('/')+' แล้ว');
 };
 
 window.dyDelMonth=function(){
@@ -870,11 +905,35 @@ window.dyDelMonth=function(){
 function dyInit(){
   // build site pills
   el('dy-site-pills').innerHTML = pillsHTML(dySiteId,'dySelSite',false);
-  // build month dropdown - all months across all sites
-  var mks=uniq(entries.filter(function(e){return e.sid===dySiteId;}).map(mKey)).sort();
+
+  // build month dropdown — รวมทุกแหล่ง: entries + dailyData + monthSettings
+  var mks=uniq(entries.filter(function(e){return e.sid===dySiteId;}).map(mKey));
+
+  // เพิ่มเดือนจาก dailyData ที่เคยบันทึกไว้
+  Object.keys(dailyData).forEach(function(k){
+    var parts=k.split('-');
+    if(parseInt(parts[0])===dySiteId){
+      var mk=parts[1]+'-'+('0'+parts[2]).slice(-2);
+      if(mks.indexOf(mk)<0) mks.push(mk);
+    }
+  });
+
+  // เพิ่มเดือนจาก monthSettings ที่เคยตั้งค่าไว้
+  Object.keys(monthSettings).forEach(function(k){
+    var parts=k.split('-');
+    if(parseInt(parts[0])===dySiteId){
+      var mk=parts[1]+'-'+('0'+parts[2]).slice(-2);
+      if(mks.indexOf(mk)<0) mks.push(mk);
+    }
+  });
+
+  mks.sort();
   var dd=el('dy-month-sel');
   var cur=dd.value;
-  dd.innerHTML=mks.map(function(mk){var p=mk.split('-').map(Number);return'<option value="'+mk+'"'+(mk===cur?' selected':'')+'>'+p[1]+'/'+p[0]+'</option>';}).join('');
+  dd.innerHTML=mks.map(function(mk){
+    var p=mk.split('-').map(Number);
+    return'<option value="'+mk+'"'+(mk===cur?' selected':'')+'>'+p[1]+'/'+p[0]+'</option>';
+  }).join('');
   if(!dd.value&&mks.length) dd.value=mks[mks.length-1];
   // init cmp months
   if(!dyCmpMonths.length&&mks.length) dyCmpMonths=[mks[mks.length-1]];
@@ -1065,7 +1124,7 @@ function dyRender(){
   if(!mk){el('dy-metrics').innerHTML='';return;}
   var p=mk.split('-').map(Number),yr=p[0],mo=p[1];
   var k=dyMKey(dySiteId,yr,mo);
-  var data=dailyData[k]||{};
+  var rawData=dailyData[k]||{};
   var numDays=parseInt(el('dy-days').value)||30;
   var targetPerDay=parseInt(el('dy-target').value)||1000;
   // save to settings
@@ -1077,13 +1136,23 @@ function dyRender(){
   el('dy-chart-title').textContent=sname+' คนออนไลน์สะสม เปรียบเทียบ เดือน '+mo+'/'+yr;
   el('dy-bar-title').textContent=sname+' คนออนไลน์รายวัน — เดือน '+mo+'/'+yr;
 
-  // Build arrays
+  // Normalize: support array (index=day, index 0=null) and object {"1":val,"2":val}
+  function getDayVal(d){
+    // object key
+    if(rawData[d]!==undefined&&rawData[d]!==null) return Number(rawData[d]);
+    if(rawData[String(d)]!==undefined&&rawData[String(d)]!==null) return Number(rawData[String(d)]);
+    // array: index d (index 0 is null placeholder)
+    if(Array.isArray(rawData)&&rawData[d]!==undefined&&rawData[d]!==null) return Number(rawData[d]);
+    return null;
+  }
+
+  // Build arrays — always show numDays bars
   var days=[],actArr=[],cumArr=[],targetArr=[],cumTarget=0,cumAct=0,totalAct=0,daysWithData=0;
   for(var d=1;d<=numDays;d++){
     days.push('วัน '+d);
     cumTarget+=targetPerDay;
     targetArr.push(cumTarget);
-    var v=data[d]!==undefined?data[d]:null;
+    var v=getDayVal(d);
     actArr.push(v);
     if(v!==null){cumAct+=v;totalAct+=v;daysWithData++;}
     cumArr.push(v!==null?cumAct:null);
@@ -1130,8 +1199,8 @@ function dyRender(){
         plugins:{legend:{display:false},tooltip:ttOpt,datalabels:{display:false}},
         layout:{padding:{top:16}},
         scales:{
-          y:{ticks:{callback:fmt,color:'#6E85A0',font:{size:11,family:'inherit',weight:'600'}},grid:{color:'rgba(255,255,255,.04)'},border:{display:false}},
-          x:{ticks:{color:'#6E85A0',font:{size:10,family:'inherit'},maxTicksLimit:15},grid:{display:false},border:{display:false}}
+          y:{min:0,ticks:{callback:fmt,color:'#6E85A0',font:{size:11,family:'inherit',weight:'600'}},grid:{color:'rgba(255,255,255,.04)'},border:{display:false}},
+          x:{ticks:{color:'#6E85A0',font:{size:10,family:'inherit'},maxTicksLimit:16},grid:{display:false},border:{display:false}}
         }}});
     }
   }catch(e){console.error('dyChart1 error',e);}
@@ -1141,13 +1210,14 @@ function dyRender(){
   try{
     var cv2=el('c-daily-bar');
     if(cv2){
-      var bgArr=actArr.map(function(v){return v===null?'rgba(255,255,255,.05)':v>=targetPerDay?scol+'CC':'rgba(255,184,0,.7)';});
+      var maxVal=Math.max.apply(null,actArr.filter(function(v){return v!==null;}));
+      if(!maxVal||maxVal<=0)maxVal=targetPerDay;
+      var bgArr=actArr.map(function(v){return v===null?'rgba(255,255,255,.04)':v>=targetPerDay?scol+'CC':'rgba(255,184,0,.75)';});
       var bdArr=actArr.map(function(v){return v===null?'transparent':v>=targetPerDay?scol:'#FFB800';});
       dyChart2=new Chart(cv2,{type:'bar',data:{labels:days,datasets:[
-        {label:'คนออนไลน์/วัน',data:actArr,
+        {label:'คนออนไลน์/วัน',data:actArr.map(function(v){return v!==null?v:0;}),
           backgroundColor:bgArr,borderColor:bdArr,
-          borderWidth:1,borderRadius:4,borderSkipped:false,
-          hoverBackgroundColor:actArr.map(function(v){return v===null?'rgba(255,255,255,.1)':v>=targetPerDay?scol:'#FFB800';})
+          borderWidth:1,borderRadius:4,borderSkipped:false
         }
       ]},options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false},tooltip:ttOpt,
@@ -1156,14 +1226,17 @@ function dyRender(){
             anchor:'end',align:'top',offset:1,
             color:function(ctx){var v=actArr[ctx.dataIndex];return(v!==null&&v>=targetPerDay)?scol:'#FFB800';},
             font:{size:9,weight:'700',family:'inherit'},
-            formatter:function(v){return(v!==null&&v>0)?fmt(v):'';},
+            formatter:function(v,ctx){var orig=actArr[ctx.dataIndex];return(orig!==null&&orig>0)?fmt(orig):'';},
             clip:false,textShadowBlur:8,
             textShadowColor:function(ctx){var v=actArr[ctx.dataIndex];return(v!==null&&v>=targetPerDay)?scol:'#FFB800';}
           }},
         layout:{padding:{top:28}},
         scales:{
-          y:{ticks:{callback:fmt,color:'#6E85A0',font:{size:11,family:'inherit',weight:'600'}},grid:{color:'rgba(255,255,255,.04)'},border:{display:false}},
-          x:{ticks:{color:'#6E85A0',font:{size:10,family:'inherit'},maxTicksLimit:15},grid:{display:false},border:{display:false}}
+          y:{min:0,suggestedMax:Math.max(maxVal*1.15,targetPerDay*1.1),
+            ticks:{callback:fmt,color:'#6E85A0',font:{size:11,family:'inherit',weight:'600'}},
+            grid:{color:'rgba(255,255,255,.04)'},border:{display:false}},
+          x:{ticks:{color:'#6E85A0',font:{size:9,family:'inherit'},maxTicksLimit:32},
+            grid:{display:false},border:{display:false}}
         }}});
     }
   }catch(e){console.error('dyChart2 error',e);}
@@ -1172,7 +1245,7 @@ function dyRender(){
   var cumT=0,cumA=0,htb='';
   for(var d2=1;d2<=numDays;d2++){
     cumT+=targetPerDay;
-    var v2=data[d2]!==undefined?data[d2]:null;
+    var v2=getDayVal(d2);
     if(v2!==null) cumA+=v2;
     var diff2=v2!==null?cumA-cumT:null;
     var diffStr=diff2!==null?'<span style="font-weight:700;color:'+(diff2>=0?'var(--teal)':'var(--coral)')+'">'+(diff2>=0?'+':'')+fmt(diff2)+'</span>':'—';
@@ -1943,7 +2016,7 @@ var SESSION_KEY='dash4web69_session';
 
 function getCredentials(){
   try{var c=localStorage.getItem(AUTH_KEY);return c?JSON.parse(c):{user:'admin',pass:'Amini123**'};}
-  catch(e){return{user:'admin',pass:'Amini123**'};}
+  catch(e){return{user:'admin',pass:'1234'};}
 }
 function saveCredentials(user,pass){
   localStorage.setItem(AUTH_KEY,JSON.stringify({user:user,pass:pass}));
